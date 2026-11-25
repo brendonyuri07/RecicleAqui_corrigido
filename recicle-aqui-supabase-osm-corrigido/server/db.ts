@@ -537,12 +537,21 @@ export async function listPointMessages(pointId: number) {
   const authorIds = Array.from(
     new Set((data ?? []).map(item => item.author_id))
   );
-  const { data: authors, error: authorError } = authorIds.length
+  let authorResult = authorIds.length
     ? await db
         .from("users")
         .select("id, name, avatar_url, community_role")
         .in("id", authorIds)
     : { data: [], error: null };
+  if (isMissingAvatarColumn(authorResult.error)) {
+    authorResult = authorIds.length
+      ? await db
+          .from("users")
+          .select("id, name, community_role")
+          .in("id", authorIds)
+      : { data: [], error: null };
+  }
+  const { data: authors, error: authorError } = authorResult;
   if (authorError) throwDatabaseError(authorError);
   const byId = new Map((authors ?? []).map(author => [author.id, author]));
   return (data ?? []).map(message => ({
@@ -565,18 +574,52 @@ export async function createPointMessage(
   const db = requireConfigured();
   const point = await getPointById(pointId, true);
   if (!point || point.approvalStatus !== "aprovado") return undefined;
-  const { error } = await db
+  const { data: inserted, error } = await db
     .from("point_messages")
-    .insert({ point_id: pointId, author_id: authorId, content });
+    .insert({ point_id: pointId, author_id: authorId, content })
+    .select("id, point_id, content, created_at, author_id")
+    .single();
   if (error) throwDatabaseError(error);
-  await logActivity({
-    actorId: authorId,
-    pointId,
-    type: "message_sent",
-    description: `Mensagem enviada no ponto ${point.name}`,
-  });
-  const messages = await listPointMessages(pointId);
-  return messages.at(-1);
+  if (!inserted) throwDatabaseError({});
+
+  // Message delivery should not fail just because the optional audit log fails.
+  try {
+    await logActivity({
+      actorId: authorId,
+      pointId,
+      type: "message_sent",
+      description: `Mensagem enviada no ponto ${point.name}`,
+    });
+  } catch (error) {
+    console.error("Falha ao registrar atividade de mensagem:", error);
+  }
+
+  let author: {
+    id: number;
+    name: string | null;
+    avatar_url: string | null;
+    community_role: string | null;
+  } | null = null;
+  const { data, error: authorError } = await db
+    .from("users")
+    .select("id, name, avatar_url, community_role")
+    .eq("id", authorId)
+    .maybeSingle();
+  if (authorError) {
+    console.error("Falha ao carregar autor da mensagem:", authorError.code);
+  } else {
+    author = data;
+  }
+  return {
+    id: inserted.id,
+    pointId: inserted.point_id,
+    content: inserted.content,
+    createdAt: new Date(inserted.created_at),
+    authorId: inserted.author_id,
+    authorName: author?.name ?? null,
+    authorAvatarUrl: author?.avatar_url ?? null,
+    authorRole: author?.community_role ?? null,
+  };
 }
 
 async function countRows(table: string, filters: Record<string, unknown> = {}) {

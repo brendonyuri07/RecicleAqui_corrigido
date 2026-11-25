@@ -5,6 +5,14 @@ export function throwDatabaseError(error: {
   code?: string;
   status?: number;
 }): never {
+  console.error("Erro Supabase:", {
+    code: error.code ?? "sem código",
+    status: error.status,
+    message: (error.message ?? "sem detalhes").replace(
+      /https?:\/\/\S+/g,
+      "[URL ocultada]"
+    ),
+  });
   const unavailable =
     !error.code ||
     /fetch|network|timeout|aborted/i.test(error.message ?? "") ||

@@ -104,7 +104,6 @@ export default function AppShell({
     { href: "/mapa", label: "Mapa" },
     { href: "/pontos", label: "Pontos" },
     { href: "/como-reciclar", label: "Como reciclar" },
-    { href: "/instalar", label: "Instalar app" },
     ...(session.isAuthenticated
       ? [
           { href: "/dashboard", label: "Painel" },

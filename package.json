@@ -3,16 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
-  "scripts": {
-    "dev": "npm --prefix recicle-aqui-supabase-osm-corrigido run dev",
-    "build": "npm --prefix recicle-aqui-supabase-osm-corrigido run build",
-    "start": "npm --prefix recicle-aqui-supabase-osm-corrigido run start",
-    "check": "npm --prefix recicle-aqui-supabase-osm-corrigido run check",
-    "format": "npm --prefix recicle-aqui-supabase-osm-corrigido run format",
-    "test": "npm --prefix recicle-aqui-supabase-osm-corrigido run test",
-    "db:push": "npm --prefix recicle-aqui-supabase-osm-corrigido run db:push",
-    "doctor": "npm --prefix recicle-aqui-supabase-osm-corrigido run doctor"
-  },
+  
+"scripts": {
+  "dev": "npm --prefix recicle-aqui run dev",
+  "build": "npm --prefix recicle-aqui run build",
+  "start": "npm --prefix recicle-aqui run start",
+  "check": "npm --prefix recicle-aqui run check",
+  "format": "npm --prefix recicle-aqui run format",
+  "test": "npm --prefix recicle-aqui run test",
+  "db:push": "npm --prefix recicle-aqui run db:push",
+  "doctor": "npm --prefix recicle-aqui run doctor"
+}
+,
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
